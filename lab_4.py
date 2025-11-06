@@ -9,25 +9,53 @@ def rotation_x(angle):
     ################################################################################################
     # TODO: [already done] paste lab 2 forward kinematics here
     ################################################################################################
-    return
+    return np.array(
+        [
+            [1, 0, 0, 0],
+            [0, np.cos(angle), -np.sin(angle), 0],
+            [0, np.sin(angle), np.cos(angle), 0],
+            [0, 0, 0, 1],
+        ]
+    )
 
 def rotation_y(angle):
     ################################################################################################
     # TODO: [already done] paste lab 2 forward kinematics here
     ################################################################################################
-    return
+    return np.array(                
+        [
+            [np.cos(angle), 0, np.sin(angle), 0],
+            [0, 1, 0, 0],
+            [-np.sin(angle), 0, np.cos(angle), 0],
+            [0, 0, 0, 1],
+        ]
+    )
 
 def rotation_z(angle):
     ################################################################################################
     # TODO: [already done] paste lab 2 forward kinematics here
     ################################################################################################
-    return
+    return np.array(                
+        [
+            [np.cos(angle), -np.sin(angle), 0, 0],
+            [np.sin(angle), np.cos(angle), 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ]
+    )
 
 def translation(x, y, z):
     ################################################################################################
     # TODO: [already done] paste lab 2 forward kinematics here
     ################################################################################################
-    return
+    return np.array(
+        [
+            [1, 0, 0, x],
+            [0, 1, 0, y],
+            [0, 0, 1, z],
+            [0, 0, 0, 1],
+        ]
+    )
 
 class InverseKinematics(Node):
 
@@ -66,6 +94,12 @@ class InverseKinematics(Node):
             ################################################################################################
             # TODO: Implement the trotting gait
             ################################################################################################
+            stand_position_2,
+            stand_position_3,
+            liftoff_position,
+            mid_swing_position,
+            touch_down_position,
+            stand_position_1,
         ]) + rf_ee_offset
         
         lf_ee_offset = np.array([0.06, 0.09, 0])
@@ -73,6 +107,12 @@ class InverseKinematics(Node):
             ################################################################################################
             # TODO: Implement the trotting gait
             ################################################################################################
+            mid_swing_position,
+            touch_down_position,
+            stand_position_1,
+            stand_position_2,
+            stand_position_3,
+            liftoff_position,
         ]) + lf_ee_offset
         
         rb_ee_offset = np.array([-0.11, -0.09, 0])
@@ -80,6 +120,12 @@ class InverseKinematics(Node):
             ################################################################################################
             # TODO: Implement the trotting gait
             ################################################################################################
+            mid_swing_position,
+            touch_down_position,
+            stand_position_1,
+            stand_position_2,
+            stand_position_3,
+            liftoff_position,
         ]) + rb_ee_offset
         
         lb_ee_offset = np.array([-0.11, 0.09, 0])
@@ -87,6 +133,12 @@ class InverseKinematics(Node):
             ################################################################################################
             # TODO: Implement the trotting gait
             ################################################################################################
+            stand_position_2,
+            stand_position_3,
+            liftoff_position,
+            mid_swing_position,
+            touch_down_position,
+            stand_position_1,
         ]) + lb_ee_offset
 
 
@@ -117,19 +169,34 @@ class InverseKinematics(Node):
         ################################################################################################
         # TODO: implement forward kinematics here
         ################################################################################################
-        return
+        T_LF_0_1 = translation(0.07500, 0.0445, 0) @ rotation_x(1.57080) @ rotation_z(-theta[0])
+        T_LF_1_2 = translation(0, 0, -0.039) @ rotation_y(-1.57080) @ rotation_z(-theta[1])
+        T_LF_2_3 = translation(0, -0.0494, 0.0685) @ rotation_y(1.57080) @ rotation_z(-theta[2])
+        T_LF_3_ee = translation(0.06231, 0.06216, -0.018)
+        T_LF_0_ee = T_LF_0_1 @ T_LF_1_2 @ T_LF_2_3 @ T_LF_3_ee
+        return T_LF_0_ee[:3, 3]
 
     def br_leg_fk(self, theta):
         ################################################################################################
         # TODO: implement forward kinematics here
         ################################################################################################
-        return
+        T_RF_0_1 = translation(-0.07500, -0.08350, 0) @ rotation_x(1.57080) @ rotation_z(theta[0])
+        T_RF_1_2 = rotation_y(-1.57080) @ rotation_z(theta[1])
+        T_RF_2_3 = translation(0, -0.04940, 0.06850) @ rotation_y(1.57080) @ rotation_z(theta[2])
+        T_RF_3_ee = translation(0.06231, -0.06216, 0.01800)
+        T_RF_0_ee = T_RF_0_1 @ T_RF_1_2 @ T_RF_2_3 @ T_RF_3_ee
+        return T_RF_0_ee[:3, 3]
 
     def bl_leg_fk(self, theta):
         ################################################################################################
         # TODO: implement forward kinematics here
         ################################################################################################
-        return
+        T_LF_0_1 = translation(-0.07500, 0.0445, 0) @ rotation_x(1.57080) @ rotation_z(-theta[0])
+        T_LF_1_2 = translation(0, 0, -0.039) @ rotation_y(-1.57080) @ rotation_z(-theta[1])
+        T_LF_2_3 = translation(0, -0.0494, 0.0685) @ rotation_y(1.57080) @ rotation_z(-theta[2])
+        T_LF_3_ee = translation(0.06231, 0.06216, -0.018)
+        T_LF_0_ee = T_LF_0_1 @ T_LF_1_2 @ T_LF_2_3 @ T_LF_3_ee
+        return T_LF_0_ee[:3, 3]
 
     def forward_kinematics(self, theta):
         return np.concatenate([self.fk_functions[i](theta[3*i: 3*i+3]) for i in range(4)])
@@ -152,26 +219,39 @@ class InverseKinematics(Node):
             ################################################################################################
             # TODO: [already done] paste lab 3 inverse kinematics here
             ################################################################################################
-            return None, None
+            C = current_position - target_ee
+            cost = float(np.dot(C, C))
+            return cost, C[0] + C[1] + C[2]
 
         def gradient(theta, epsilon=1e-3):
             grad = np.zeros(3)
             ################################################################################################
             # TODO: [already done] paste lab 3 inverse kinematics here
             ################################################################################################
+            for i in range(3):
+                e = np.zeros(3); e[i] = 1.0
+                c_plus, _  = cost_function(theta + epsilon*e)
+                c_minus, _ = cost_function(theta - epsilon*e)
+                grad[i] = (c_plus - c_minus) / (2.0*epsilon)
             return grad
 
         theta = np.array(initial_guess)
-        learning_rate = None # TODO:[already done] paste lab 3 inverse kinematics here
-        max_iterations = None # TODO: [already done] paste lab 3 inverse kinematics here
-        tolerance = None # TODO: [already done] paste lab 3 inverse kinematics here
+        _, C = cost_function(theta)
+        learning_rate = 5 # TODO:[already done] paste lab 3 inverse kinematics here
+        max_iterations = 100 # TODO: [already done] paste lab 3 inverse kinematics here
+        tolerance = C # TODO: [already done] paste lab 3 inverse kinematics here
 
         cost_l = []
         for _ in range(max_iterations):
             ################################################################################################
             # TODO: [already done] paste lab 3 inverse kinematics here
             ################################################################################################
-            continue
+            grad = gradient(theta)
+            theta = theta - learning_rate * grad
+            cost, C = cost_function(theta)
+            cost_l.append(cost)
+            if cost < tolerance:
+                break
 
         return theta
 
@@ -179,8 +259,13 @@ class InverseKinematics(Node):
         ################################################################################################
         # TODO: implement interpolation for all 4 legs here
         ################################################################################################
-        
-        return
+        P = self.ee_triangle_positions[leg_index]   # (6,3)
+        tau = (t % 1.0) * 6.0
+        seg = int(np.floor(tau))
+        u = tau - seg
+        i0 = seg
+        i1 = (seg + 1) % 6
+        return (1.0 - u) * P[i0] + u * P[i1]
 
     def cache_target_joint_positions(self):
         # Calculate and store the target joint positions for a cycle and all 4 legs
